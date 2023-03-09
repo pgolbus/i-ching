@@ -1,4 +1,3 @@
-from __future__ import print_function
 import argparse
 from datetime import datetime
 import random
@@ -6,25 +5,35 @@ import requests
 import sys
 
 
+def test_assertions():
+    if first:
+        assert throw == 5 or throw == 9
+    else:
+        assert throw == 4 or throw == 8
+
+def print_fingers(fingers):
+    sys.stderr.write(' | '.join([str(finger_stalks) for finger_stalks in fingers]))
+    sys.stderr.write('\n')
+
+def get_coins():
+    r = requests.get('https://www.random.org/integers/?format=plain&num=18&min=2&max=3&col=18&base=10')
+    text = r.text
+    return text.strip().split('\t')
+
+def get_stalks():
+    r = requests.get('https://www.random.org/decimal-fractions/?num=18&dec=2&col=18&format=plain&rnd=new')
+    text = r.text
+    return text.strip().split('\t')
+
 def throw_stalks(test):
     '''
     Attempt to capture the spirit of the traditional yarrow stalk method. It's
     supposed to be like this, trust me
     '''
-    def test_assertions():
-        if first:
-            assert throw == 5 or throw == 9
-        else:
-            assert throw == 4 or throw == 8
-
-    def print_fingers(fingers):
-        sys.stderr.write(' | '.join([str(finger_stalks) for finger_stalks in fingers]))
-        sys.stderr.write('\n')
-
     if test:
         splits = [random.random() for _ in range(18)]
     else:
-        splits = [float(x) for x in requests.get('https://www.random.org/decimal-fractions/?num=18&dec=2&col=18&format=plain&rnd=new').text.strip().split('\t')]
+        splits = [float(x) for x in get_stalks()]
     throws = []
     for _ in range(6):
         sys.stderr.write('\n----------\n')
@@ -81,7 +90,7 @@ def throw_coins(test):
     if test:
         throws = [random.randint(2, 3) for _ in range(18)]
     else:
-        throws = [int(x) for x in requests.get('https://www.random.org/integers/?format=plain&num=18&min=2&max=3&col=18&base=10').text.strip().split('\t')]
+        throws = [int(x) for x in get_coins()]
     return throws
 
 
