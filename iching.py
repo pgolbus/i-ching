@@ -5,40 +5,52 @@ import requests
 import sys
 
 
-def test_assertions():
-    if first:
-        assert throw == 5 or throw == 9
-    else:
-        assert throw == 4 or throw == 8
-
 def print_fingers(fingers):
+    """Prints what's "in your hands" to stderr to make it as much like actually throwing the stalks as you can
+
+    Args:
+        fingers ([int, int, int]): An array containing how many stalks are between your fingers
+    """
     sys.stderr.write(' | '.join([str(finger_stalks) for finger_stalks in fingers]))
     sys.stderr.write('\n')
 
 def get_coins():
+    """Curls random.org to get the coin flips
+
+    Returns:
+        An array of coin flips
+    """
     r = requests.get('https://www.random.org/integers/?format=plain&num=18&min=2&max=3&col=18&base=10')
     text = r.text
-    return text.strip().split('\t')
+    return [int(x) for x in text.strip().split('\t')]
 
 def get_stalks():
+    """Curls random.org to get the number of stalks
+
+    Returns:
+        The array of stalk splits
+    """
     r = requests.get('https://www.random.org/decimal-fractions/?num=18&dec=2&col=18&format=plain&rnd=new')
     text = r.text
-    return text.strip().split('\t')
+    return [float(x) for x in text.strip().split('\t')]
 
 def throw_stalks(test):
-    '''
-    Attempt to capture the spirit of the traditional yarrow stalk method. It's
+    """Attempt to capture the spirit of the traditional yarrow stalk method. It's
     supposed to be like this, trust me
-    '''
+
+    Args:
+        test (Bool): If true, then don't curl random.org
+
+    Returns:
+        ([int]) The results of the throws
+    """
     if test:
         splits = [random.random() for _ in range(18)]
     else:
-        splits = [float(x) for x in get_stalks()]
+        splits = get_stalks()
     throws = []
     for _ in range(6):
         sys.stderr.write('\n----------\n')
-        if test:
-            first = True
         stalks = 50
         for _ in range(3):
             # 1. Remove a yarrow stalk, and put it in front of you, in a direction
@@ -74,9 +86,6 @@ def throw_stalks(test):
             fingers[2] = 4 if right % 4 == 0 else right % 4
             print_fingers(fingers)
             throw = sum(fingers)
-            if test:
-                test_assertions()
-                first = False
             throws.append(2 if throw > 6 else 3)
             sys.stderr.write('\n    {}    '.format(throw))
             sys.stderr.write('\n')
@@ -85,16 +94,32 @@ def throw_stalks(test):
             sys.stderr.write('   \n')
     return throws
 
-
 def throw_coins(test):
+    """Throw coins
+
+    Args:
+        test (Bool): If true, then don't curl random.org
+
+    Returns:
+        ([int]) The results of the throws
+    """
     if test:
         throws = [random.randint(2, 3) for _ in range(18)]
     else:
-        throws = [int(x) for x in get_coins()]
+        throws = get_coins()
     return throws
 
-
 def build_lines(throws):
+    """Convert each throw into a "line" eg a number 6-9
+
+    I'm writing these comments years later. I don't remember why this is a generator. Seems like a weird choice
+
+    Args:
+        throws ([int]): The results of the throws
+
+    Yields:
+        (int) the throw converted to a number
+    """
     line = []
     for throw in throws:
         line.append(throw)
@@ -102,8 +127,19 @@ def build_lines(throws):
             yield sum(line)
             line = []
 
-
 def format_line(throw):
+    """Converts the line number into a string and a flag for whether it's floating
+
+    Some lines are "floating" in that they have a primary value and then are the opposite for the secondary value
+    Therefore, we have to return the primary value, the secondary value, and a flag indicating if it's floating
+    If all the flags are false, we only need the primaries
+
+    Args:
+        throw (int): Which number it is, 6-9
+
+    Returns:
+        (str, str, bool) The string formatted primary and secondary values, and a floating flag
+    """
     if throw == 9:
         return '      -o-', '   - -   ', True
     if throw == 6:
@@ -115,8 +151,15 @@ def format_line(throw):
         line_string = '{}   - -{}'
         return line_string.format('   ', ''), line_string.format('', '   '), False
 
-
 def format_throws(throws):
+    """Format the throws for string output
+
+    Args:
+        throws([int]): The result of the throws
+
+    Returns:
+        (str) A nicely printed string of the throw
+    """
     primary_hexagram, secondary_hexagram = [], []
     use_secondary = False
     for throw in throws:
